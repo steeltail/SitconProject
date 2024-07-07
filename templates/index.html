@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺北市城市儀表板智能對話系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <nav class="top-nav">
+            <h1>臺北市城市儀表板智能對話系統</h1>
+        </nav>
+        <div class="main-content">
+            <div class="slider-container-vertical">
+                <label for="voice-speed-slider" class="vertical-label">速度</label>
+                <input type="range" id="voice-speed-slider" class="slider-vertical" min="0.5" max="2" step="0.1" value="1" orient="vertical">
+            </div>
+            <main class="chat-window">
+                <div id="message-container" class="message-container">
+                    <!-- 消息將在這裡動態添加 -->
+                </div>
+            </main>
+        </div>
+        <footer class="input-area">
+            <textarea id="user-input" placeholder="輸入您的消息..."></textarea>
+            <button id="send-button">發送</button>
+            <button id="voice-button">🎤</button>
+            <div id="voice-indicator" class="voice-indicator"></div>
+        </footer>
+    </div>
+    <script>
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const voiceButton = document.getElementById('voice-button');
+        const messageContainer = document.getElementById('message-container');
+        const voiceIndicator = document.getElementById('voice-indicator');
+        const voiceSpeedSlider = document.getElementById('voice-speed-slider');
+
+        let recognition;
+        let recognizing = false;
+
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'zh-TW';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                recognizing = true;
+                voiceIndicator.style.display = 'block';
+                voiceButton.textContent = '🔴';
+                console.log('Speech recognition started');
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                console.log('Speech recognition result:', transcript);
+                userInput.value = transcript;
+                sendMessage();
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error', event);
+                alert('語音識別出錯，請重試。');
+                voiceIndicator.style.display = 'none';
+                recognizing = false;
+                voiceButton.textContent = '🎤';
+            };
+
+            recognition.onend = function() {
+                recognizing = false;
+                voiceIndicator.style.display = 'none';
+                voiceButton.textContent = '🎤';
+                console.log('Speech recognition ended');
+            };
+        } else {
+            alert('您的瀏覽器不支持語音識別。');
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        voiceButton.addEventListener('click', toggleVoiceRecognition);
+        userInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            if (recognition && recognizing) {
+                recognition.stop(); // 暫停語音識別
+            }
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            appendMessage('user', message);
+            userInput.value = '';
+
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    appendMessage('ai', data.response);
+                    console.log('AI Response:', data.response);  // Log AI response for debugging
+                    speakResponse(data.response);
+                } else if (data.length === 0) {
+                    const noMatchMessage = '沒有找到匹配的 iframe 代碼。';
+                    appendMessage('ai', noMatchMessage);
+                    console.log('No match message');  // Log no match message
+                    speakResponse(noMatchMessage);
+                } else {
+                    data.forEach(iframe => {
+                        const iframeHTML = `<h2>${iframe.title}</h2><iframe id="${iframe.id}" src="${iframe.src}" width="${iframe.width}" height="${iframe.height}" style="${iframe.style}" frameborder="${iframe.frameborder}" allow="${iframe.allow}" loading="${iframe.loading}"></iframe>`;
+                        appendMessage('ai', iframeHTML);
+                        speakResponse(iframe.title); // 語音輸出標題
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching response:', error);
+            });
+        }
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.innerHTML = message;
+            messageContainer.appendChild(messageElement);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+
+        function toggleVoiceRecognition() {
+            if (recognizing) {
+                recognition.stop();
+                recognizing = false;
+            } else {
+                recognition.start();
+                recognizing = true;
+            }
+        }
+
+        function speakResponse(message) {
+            const synth = window.speechSynthesis;
+            const utterThis = new SpeechSynthesisUtterance(message);
+            utterThis.lang = 'zh-TW';
+            utterThis.rate = voiceSpeedSlider.value;  // 使用滑桿值作為語音速度
+            synth.speak(utterThis);
+        }
+    </script>
+</body>
+</html>
