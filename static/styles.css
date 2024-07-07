@@ -1,0 +1,128 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+    background-color: #343541;
+    color: #ececf1;
+}
+
+.chat-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-nav {
+    background-color: #343541;
+    color: #ececf1;
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #565869;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.chat-window {
+    flex: 1;
+    background-color: #343541;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.message-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.message {
+    max-width: 85%;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    line-height: 1.5;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.message.ai {
+    align-self: flex-start;
+    background-color: #444654;
+    border-radius: 6px;
+}
+
+.message.user {
+    align-self: flex-end;
+    background-color: #343541;
+    border: 1px solid #565869;
+    border-radius: 6px;
+}
+
+.input-area {
+    display: flex;
+    padding: 1rem;
+    background-color: #343541;
+    border-top: 1px solid #565869;
+}
+
+.input-area textarea {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #565869;
+    border-radius: 6px;
+    background-color: #40414f;
+    color: #ececf1;
+    font-size: 1rem;
+    resize: none;
+    height: 3rem;
+}
+
+.input-area button {
+    padding: 0.75rem 1rem;
+    margin-left: 0.5rem;
+    background-color: #40414f;
+    color: #ececf1;
+    border: 1px solid #565869;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.input-area button:hover {
+    background-color: #565869;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #343541;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #565869;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #676980;
+}
+
+@media (max-width: 768px) {
+    .chat-info {
+        display: none;
+    }
+}
